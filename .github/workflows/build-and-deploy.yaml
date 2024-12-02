@@ -3,7 +3,7 @@ name: Build and Deploy to GKE
 on:
   push:
     branches:
-      - main  # O la rama en la que quieras que se dispare el flujo de trabajo
+      - master  # O la rama en la que quieras que se dispare el flujo de trabajo
 
 env:
   # Definir las variables necesarias
