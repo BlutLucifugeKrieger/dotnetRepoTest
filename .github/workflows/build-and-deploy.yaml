@@ -33,7 +33,7 @@ jobs:
         run: |
           docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG .
 
-      # Paso 4: Autenticación Docker a Artifact Registry
+      # Paso 4: Autenticación Docker a Artifact Registry - x
       - name: Authenticate Docker to Artifact Registry
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev
