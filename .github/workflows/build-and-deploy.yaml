@@ -17,7 +17,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Paso 1: Obtener el código
+      # Paso 1: Obtener el código -x
       - name: Checkout code
         uses: actions/checkout@v2
 
