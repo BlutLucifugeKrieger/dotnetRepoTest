@@ -17,42 +17,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    # Paso 1: Obtener el código
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Paso 1: Obtener el código
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Paso 2: Configurar Google Cloud
-    - name: Set up Google Cloud credentials
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+      # Paso 2: Configurar Google Cloud
+      - name: Set up Google Cloud credentials
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-    # Paso 3: Construir la imagen Docker
-    - name: Build Docker image
-      run: |
-        docker build -t gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG .
+      # Paso 3: Construir la imagen Docker
+      - name: Build Docker image
+        run: |
+          docker build -t gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG .
 
-    # Paso 4: Subir la imagen a Google Container Registry
-    - name: Push Docker image to GCR
-      run: |
-        docker push gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
+      # Paso 4: Subir la imagen a Google Container Registry
+      - name: Push Docker image to GCR
+        run: |
+          docker push gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
 
-    # Paso 5: Configurar kubectl y desplegar en GKE
-    - name: Set up kubectl
-      uses: google-github-actions/setup-kubectl@v0.5.0
+      # Paso 5: Configurar kubectl y obtener credenciales de GKE
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-    - name: Get GKE credentials
-      run: |
-        gcloud container clusters get-credentials $GOOGLE_CLUSTER_NAME --zone $GOOGLE_COMPUTE_ZONE --project $GOOGLE_PROJECT_ID
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials $GOOGLE_CLUSTER_NAME --zone $GOOGLE_COMPUTE_ZONE --project $GOOGLE_PROJECT_ID
 
-    - name: Deploy to GKE
-      run: |
-        kubectl set image deployment/your-deployment-name your-container-name=gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
-        kubectl rollout status deployment/your-deployment-name
-
-    - name: deploy to gke
-      env: 
-       GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
-      run:
-       gcloud container clusters get-credentials autopilot-cluster-1 --region 'us-central1'
+      # Paso 6: Desplegar la imagen en GKE
+      - name: Deploy to GKE
+        run: |
+          kubectl set image deployment/your-deployment-name your-container-name=gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
+          kubectl rollout status deployment/your-deployment-name
