@@ -21,9 +21,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Paso 2: Configurar Google Cloud
+      # Paso 2: Configurar Google Cloud (usando la versión más reciente)
       - name: Set up Google Cloud credentials
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
           credentials_file_path: ${{ secrets.GOOGLE_CREDENTIALS }}
@@ -40,7 +40,7 @@ jobs:
 
       # Paso 5: Configurar gcloud CLI y obtener credenciales de GKE
       - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
           credentials_file_path: ${{ secrets.GOOGLE_CREDENTIALS }}
