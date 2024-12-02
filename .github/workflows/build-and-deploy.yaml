@@ -17,7 +17,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Paso 1: Obtener el código -x
+      # Paso 1: Obtener el código
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -33,17 +33,23 @@ jobs:
         run: |
           docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG .
 
-      # Paso 4: Autenticación Docker a Artifact Registry - x
+      # Paso 4: Autenticación Docker a Artifact Registry
       - name: Authenticate Docker to Artifact Registry
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      # Paso 5: Subir la imagen a Artifact Registry
+      # Paso 5: Verificar la autenticación de gcloud
+      - name: Debug gcloud authentication
+        run: |
+          gcloud auth list
+          gcloud config list
+
+      # Paso 6: Subir la imagen a Artifact Registry
       - name: Push Docker image to Artifact Registry
         run: |
           docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG
 
-      # Paso 6: Configurar gcloud CLI y obtener credenciales de GKE
+      # Paso 7: Configurar gcloud CLI y obtener credenciales de GKE
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -54,7 +60,7 @@ jobs:
         run: |
           gcloud container clusters get-credentials $GOOGLE_CLUSTER_NAME --zone $GOOGLE_COMPUTE_ZONE --project $GOOGLE_PROJECT_ID
 
-      # Paso 7: Desplegar la imagen en GKE
+      # Paso 8: Desplegar la imagen en GKE
       - name: Deploy to GKE
         run: |
           kubectl set image deployment/your-deployment-name your-container-name=us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG
