@@ -1,0 +1,58 @@
+name: Build and Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main  # O la rama en la que quieras que se dispare el flujo de trabajo
+
+env:
+  # Definir las variables necesarias
+  GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+  GOOGLE_COMPUTE_ZONE: 'us-central1'  # Cambia a la zona de tu GKE
+  GOOGLE_CLUSTER_NAME: 'autopilot-cluster-1'  # Nombre de tu clúster de GKE
+  IMAGE_NAME: 'azure_test'  # Nombre de tu aplicación
+  IMAGE_TAG: ${{ github.sha }}  # Usamos el commit hash para etiquetar la imagen
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # Paso 1: Obtener el código
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Paso 2: Configurar Google Cloud
+    - name: Set up Google Cloud credentials
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    # Paso 3: Construir la imagen Docker
+    - name: Build Docker image
+      run: |
+        docker build -t gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG .
+
+    # Paso 4: Subir la imagen a Google Container Registry
+    - name: Push Docker image to GCR
+      run: |
+        docker push gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
+
+    # Paso 5: Configurar kubectl y desplegar en GKE
+    - name: Set up kubectl
+      uses: google-github-actions/setup-kubectl@v0
+
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials $GOOGLE_CLUSTER_NAME --zone $GOOGLE_COMPUTE_ZONE --project $GOOGLE_PROJECT_ID
+
+    - name: Deploy to GKE
+      run: |
+        kubectl set image deployment/your-deployment-name your-container-name=gcr.io/$GOOGLE_PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
+        kubectl rollout status deployment/your-deployment-name
+
+    - name: deploy to gke
+      env: 
+       GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+      run:
+       gcloud container clusters get-credentials autopilot-cluster-1 --region 'us-central1'

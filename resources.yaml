@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnet-core-app
+  namespace: default
+  labels:
+    app: aspnet-core-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aspnet-core-app
+  template:
+    metadata:
+      labels:
+        app: aspnet-core-app
+    spec:
+      containers:
+      - name: aspnet-core-container
+        image: mydockerhubuser/aspnet-core-app:latest # Cambia esta imagen por la de tu app
+        ports:
+        - containerPort: 80
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspnet-core-service
+  namespace: default
+  labels:
+    app: aspnet-core-app
+spec:
+  selector:
+    app: aspnet-core-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aspnet-core-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod # Si usas Cert-Manager para HTTPS
+spec:
+  rules:
+  - host: myapp.example.com # Cambia esto por tu dominio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: aspnet-core-service
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - myapp.example.com
+    secretName: aspnet-core-tls # Certificado TLS para HTTPS
