@@ -6,7 +6,6 @@ on:
       - master  # O la rama en la que quieras que se dispare el flujo de trabajo
 
 env:
-  # Definir las variables necesarias
   GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
   GOOGLE_COMPUTE_ZONE: 'us-central1'  # Cambia a la zona de tu GKE
   GOOGLE_CLUSTER_NAME: 'autopilot-cluster-1'  # Nombre de tu clúster de GKE
@@ -25,7 +24,7 @@ jobs:
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}  # Proporcionar el JSON de credenciales
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       # Paso 3: Construir la imagen Docker
       - name: Build Docker image
@@ -37,18 +36,12 @@ jobs:
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      # Paso 5: Verificar la autenticación de gcloud
-      - name: Debug gcloud authentication
-        run: |
-          gcloud auth list
-          gcloud config list
-
-      # Paso 6: Subir la imagen a Artifact Registry
+      # Paso 5: Subir la imagen a Artifact Registry
       - name: Push Docker image to Artifact Registry
         run: |
           docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG
 
-      # Paso 7: Configurar gcloud CLI y obtener credenciales de GKE
+      # Paso 6: Configurar gcloud CLI y obtener credenciales de GKE
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -59,8 +52,13 @@ jobs:
         run: |
           gcloud container clusters get-credentials $GOOGLE_CLUSTER_NAME --zone $GOOGLE_COMPUTE_ZONE --project $GOOGLE_PROJECT_ID
 
-      # Paso 8: Desplegar la imagen en GKE
-      - name: Deploy to GKE
+      # Paso 7: Crear un Deployment si no existe
+      - name: Create Deployment and Service in GKE
         run: |
-          kubectl set image deployment/your-deployment-name your-container-name=us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG
-          kubectl rollout status deployment/your-deployment-name
+          kubectl apply -f k8s-deployment.yaml
+
+      # Paso 8: Actualizar la imagen del Deployment
+      - name: Update Deployment with new image
+        run: |
+          kubectl set image deployment/my-app-deployment my-container=us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/my-repo/$IMAGE_NAME:$IMAGE_TAG
+          kubectl rollout status deployment/my-app-deployment
